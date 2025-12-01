@@ -7,7 +7,8 @@ CFLAGS = -m32\
 	-Wextra\
 	-fno-builtin\
 	-nostdlib\
-	-nodefaultlibs\
+	-nodefaultlibs
+
 LDFLAGS = -m elf_i386\
 	-T link.ld\
 
@@ -15,37 +16,30 @@ LDFLAGS = -m elf_i386\
 
 all: os.iso # build the bootable iso
 
-boot.o: boot.S 
-	$(CC) -m32 -c boot.S -o boot.o
+kernel/boot/boot.o: kernel/boot/boot.S 
+	$(CC) $(CFLAGS) -m32 -c kernel/boot/boot.S -o kernel/boot/boot.o
 
-kernel.o: kernel.c
-	$(CC) -m32 -c kernel.c -o kernel.o
+kernel/kernel/kernel.o: kernel/kernel/main.c
+	$(CC) $(CFLAGS) -m32 -c kernel/kernel/main.c -o kernel/kernel/kernel.o
 
 # link both into single ELF kernel
-kernel.elf: boot.o kernel.o link.ld
-	$(LD) $(LDFLAGS) -o kernel.elf boot.o kernel.o
+kernel.elf: kernel/boot/boot.o kernel/kernel/kernel.o link.ld
+	$(LD) $(LDFLAGS) -o kernel.elf kernel/boot/boot.o kernel/kernel/kernel.o
 
 
-iso/boot/grub/grub.cfg: kernel.elf
-	mkdir -p iso/boot/grub
-	cp kernel.elf iso/boot/
-	@cat > iso/boot/grub/grub.cfg <<'EOF'
-		set timeout=0
-		set default=0
+kernel/boot/grub/grub.cfg: kernel.elf
+	mkdir -p kernel/boot/grub
+	cp kernel.elf kernel/boot/
+	cp kernel/boot/grub.cfg.template kernel/boot/grub/grub.cfg
 
-		menuentry "lanix" {
-			multiboot /boot/kernel.elf
-			boot
-		}
-	EOF
-
-os.iso: kernel.elf iso/boot/grub/grub.cfg
-	grub-mkrescue -o os.iso iso 2>/dev/null || \
+os.iso: kernel.elf kernel/boot/grub/grub.cfg
+	grub-mkrescue -o os.iso kernel/  || \
 		( echo "grub-mkrescue fail" && exit 1 )
 
 run: os.iso
-	qemu-system-i386 -cdrom os.iso
+	qemu-system-i386 -cdrom os.iso -display gtk
 
 clean:
-	rm -f *.o *.elf os.iso
-	rm -rf iso
+	rm -rf kernel/boot/*.o kernel/kernel/*.o *.elf os.iso
+	rm -rf kernel/boot/grub
+	rm kernel/boot/*.elf

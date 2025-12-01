@@ -6,16 +6,16 @@
 	.long -(0x1BADB002 + 0x00000000)
 
 	.section .text
-	.global start
-	.type start, @function
+	.global _start
+	.type _start, @function
 
-start:
+_start:
 	cli
 	call kernel_main
 
 hang:
 	cli
 	hlt
-	jmp .hang
+	jmp hang
 
-.size start, .-start
+.size _start, .-_start
