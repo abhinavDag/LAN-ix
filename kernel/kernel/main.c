@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "../include/lottery.h"
 
 static inline void clear_vga(void) {
     uint16_t *vga = (uint16_t*)0xB8000;
@@ -11,6 +12,7 @@ static inline void clear_vga(void) {
 
 void kernel_main(void){
 	clear_vga();
+    lottery_init();
     volatile uint16_t* vga = (uint16_t*) 0xB8000;
 	const char* message = "Hello from LAN-ix!";
 
