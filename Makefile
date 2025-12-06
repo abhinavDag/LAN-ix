@@ -9,6 +9,7 @@ CFLAGS = -m32 \
 	-fno-builtin \
 	-nostdlib \
 	-nodefaultlibs \
+	-I. \
 	-Ikernel/include
 
 LDFLAGS = -m elf_i386 \
@@ -73,7 +74,9 @@ kernel.elf: \
 	kernel/kernel/idt.o \
 	kernel/kernel/timer.o \
 	kernel/kernel/timer_isr.o \
-	kernel/kernel/cmdline.o
+	kernel/kernel/cmdline.o \
+	kernel/kernel/pic.o \
+	kernel/kernel/random.o \
 
 	$(LD) $(LDFLAGS) -o kernel.elf \
 		kernel/boot/boot.o \
@@ -85,7 +88,10 @@ kernel.elf: \
 		kernel/kernel/idt.o \
 		kernel/kernel/timer.o \
 		kernel/kernel/timer_isr.o \
-		kernel/kernel/cmdline.o
+		kernel/kernel/cmdline.o \
+		kernel/kernel/pic.o \
+		kernel/kernel/random.o \
+
 
 
 # =====================================================
@@ -100,6 +106,12 @@ kernel/boot/grub/grub.cfg: kernel.elf
 os.iso: kernel.elf kernel/boot/grub/grub.cfg
 	grub-mkrescue -o os.iso kernel/ || \
 		( echo "grub-mkrescue fail" && exit 1 )
+
+kernel/kernel/pic.o: kernel/kernel/pic.c kernel/include/pic.h
+	$(CC) $(CFLAGS) -c kernel/kernel/pic.c -o kernel/kernel/pic.o
+
+kernel/kernel/random.o: kernel/kernel/random.c kernel/include/random.h
+	$(CC) $(CFLAGS) -c kernel/kernel/random.c -o kernel/kernel/random.o
 
 
 # =====================================================

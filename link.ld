@@ -3,27 +3,24 @@ ENTRY(_start)
 
 SECTIONS
 {
-	. = 0x00100000;
+    . = 0x00100000;
 
-	.multiboot : {
-		*(.multiboot)
-	}
+    .multiboot_header : {
+        KEEP(*(.multiboot_header))
+    }
 
-	.text : {
-		*(.text*)
-	}
+    .text : {
+        *(.text.startup)    /* force entry code here first */
+        *(.text*)           /* everything else */
+        *(.rodata*)
+    }
 
-	.rodata : {
-		*(.rodata*)
-	}
+    .data : {
+        *(.data*)
+    }
 
-	.data : {
-		*(.data*)
-	}
-
-	.bss : {
-		*(.bss*)
-		*(COMMON)
-	}
+    .bss : {
+        *(.bss*)
+        *(COMMON)
+    }
 }
-

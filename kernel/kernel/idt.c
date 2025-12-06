@@ -17,7 +17,7 @@ struct idt_ptr {
 static struct idt_entry idt[256];
 static struct idt_ptr idt_descriptor;
 
-extern void load_idt(uint32_t);
+extern void load_idt(const void *ptr);
 
 static void set_gate(int n, uint32_t handler) {
     idt[n].offset_low  = handler & 0xFFFF;
@@ -31,20 +31,16 @@ void idt_init() {
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base  = (uint32_t)&idt;
 
+    /* initialize all entries to zero */
     for (int i = 0; i < 256; i++) {
         set_gate(i, 0);
     }
 
-    load_idt((uint32_t)&idt_descriptor);
+    /* install timer ISR into the idt BEFORE loading it */
     extern void timer_isr_stub();
     set_gate(32, (uint32_t)timer_isr_stub);
 
+    /* now load the IDT (so CPU sees the correct table) */
+    load_idt(&idt_descriptor);
 }
 
-void enable_interrupts() {
-    __asm__ volatile("sti");
-}
-
-void disable_interrupts() {
-    __asm__ volatile("cli");
-}
