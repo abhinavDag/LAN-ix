@@ -1,0 +1,30 @@
+We have created an OS which implements lottery scheduling (premptive) and has its own entropy pool.
+
+The issue: Since it is premptive, we had to program the OS to be able to handle interrupts. Hence we had a problem when doing that.
+
+What we planned to do:
+    Create a timer interrupt handler service routine, map the routine in the Interrupt Descriptor Table(IDT).
+    Run the interrupt every 2ms (Frequency: 50Hz), that will be IRQ0, which will be collected by PIC, that will remap it to 32nd entry in the IDT, 
+    IDT will ask CPU to so to ISR int memory which will call timer_handler() C function.
+What went wrong: We are receiving interrupts(either timer or bad instruction etc) before even the IDT is initialized with the corresponding ISR location.
+
+What we should have done: We were not eve able to read what went wrong since the code is run on that primitive OS using QEMU, se we got triple faults and
+boot loops, if we would have attached a channel (like GDB Debugger) to collect all the errors, we would have had a chance to read the errors and act accordingly.
+
+CONTRIBUTION:
+
+NITHIN
+------
+1) Boot sequence:- Booting of the OS, the assembly part (boot.S) compiling all the files using Makefile, linker script and rest.
+2) Kernel Initialization:- main.c
+3) Process initialization:- proc.c
+
+LOKESH
+------
+1) Lottery Scheduling:- full part, timer handling and timer interrupt creation.
+2) Interrupts:- idt.c, pic.c. (partial)
+
+ABHINAV
+-------
+1) Randomness:- entropy collection, generating random bits, range generate etc.
+2) Interrupts:- idt.c, pic.c. (partial)
