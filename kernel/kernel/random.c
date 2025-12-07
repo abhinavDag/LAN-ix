@@ -6,6 +6,24 @@
 #include "../include/pic.h" /* optional */
 
 /* Simple 64-bit pool + SplitMix64 mixer. Good enough for scheduler randomness. */
+void kmain() {
+    volatile unsigned short* vga = (unsigned short*)0xB8000;
+
+    // Clear the screen
+    for (int i = 0; i < 80 * 25; i++) {
+        vga[i] = 0x0720;   // space + grey-on-black
+    }
+
+    // Print "hi"
+    vga[0] = (0x07 << 8) | 'h';
+    vga[1] = (0x07 << 8) | 'i';
+
+    // Halt forever
+    for (;;) {
+        __asm__ volatile("hlt");
+    }
+}
+
 
 struct {
     uint64_t pool;
@@ -34,6 +52,7 @@ void rng_add_entropy(uint64_t sample, int est_bits __attribute__((unused))) {
     tmp = splitmix64(&tmp);
     rng_state.pool ^= tmp;
     rng_state.pool = splitmix64(&rng_state.pool);
+//    kmain();
 }
 
 uint64_t rng_get_u64(void) {

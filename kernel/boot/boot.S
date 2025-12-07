@@ -14,11 +14,6 @@
 
 _start:
     cli
-    /* tiny VGA probe (optional) */
-    mov $0xB8000, %edi
-    movb $'@', (%edi)       /* visible char to confirm entry */
-    movb $0x07, 1(%edi)
-
     call kernel_main
 
 hang:

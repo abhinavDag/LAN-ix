@@ -31,16 +31,17 @@ void idt_init() {
     idt_descriptor.limit = sizeof(idt) - 1;
     idt_descriptor.base  = (uint32_t)&idt;
 
-    /* initialize all entries to zero */
     for (int i = 0; i < 256; i++) {
-        set_gate(i, 0);
+        idt[i].offset_low  = 0;
+        idt[i].selector    = 0x08;
+        idt[i].zero        = 0;
+        idt[i].type_attr   = 0x8E;
+        idt[i].offset_high = 0;
     }
 
-    /* install timer ISR into the idt BEFORE loading it */
     extern void timer_isr_stub();
     set_gate(32, (uint32_t)timer_isr_stub);
 
-    /* now load the IDT (so CPU sees the correct table) */
     load_idt(&idt_descriptor);
 }
 

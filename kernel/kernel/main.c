@@ -14,25 +14,6 @@ static inline void clear_vga(void) {
     }
 }
 
-// void kernel_main(void){
-// 	clear_vga();
-//    
-//     rng_init(); 
-//     lottery_init();
-//     init_process_system();
-// 
-//     idt_init();
-//     init_timer();
-//     enable_interrupts();
-// 
-//     // Create one or two test processes
-//     create_process(process1_entry, 1);
-//     create_process(process2_entry, 2);
-// 
-//     // Idle loop: scheduler switches tasks on timer interrupts
-// 	for(;;) __asm__ volatile("hlt");
-// }
-
 void kernel_main(void){
     clear_vga();
 

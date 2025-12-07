@@ -5,67 +5,26 @@
 #include <stdbool.h>
 #include "../include/random.h"
 
-/* Configuration */
 #define DEFAULT_TICKETS 10U
 
 enum proc_state_local { UNUSED = 0 };
 
-/* Externals - your kernel must provide these (or you can add thin wrappers) */
 extern void context_switch(struct context *old_ctx, struct context *new_ctx);
 extern struct pcb *get_current_pcb(void);
 extern void set_current_pcb(struct pcb *p);
 extern uint32_t external_entropy_u32(void); /* optional */
 extern const char *kernel_cmdline_str(void); /* optional */
 
-/* Internal process list */
 static struct pcb *proc_table = NULL;
 static struct pcb *last_added = NULL;
 static uint32_t total_tickets = 0;
-// static uint32_t rng_state = 0xA5A5A5A5U;
 
-/* rdtsc for i386 */
 static inline uint64_t rdtsc64(void) {
     uint32_t a, d;
     __asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
     return ((uint64_t)d << 32) | a;
 }
 
-// /* fallback PRNG (xorshift32 mixed with rdtsc) */
-// static uint32_t prng_u32(void) {
-//     /* prefer external entropy if linked in */
-//     /* Note: kernel may or may not provide external_entropy_u32 - if it does
-//        link it, it'll be used. If not provided, linker will complain if referenced.
-//        To avoid an unresolved reference when not present, we use a weak alias
-//        pattern at link time in kernel if desired. For clarity, we assume kernel
-//        will either supply it or you won't link that symbol. */
-// #ifdef USE_EXTERNAL_ENTROPY
-//     return external_entropy_u32();
-// #else
-//     if (rng_state == 0) {
-//         uint64_t t = rdtsc64();
-//         rng_state = (uint32_t)(t ^ (t >> 32) ^ 0xDEADBEEFU);
-//         if (rng_state == 0) rng_state = 0x1234567U;
-//     }
-//     uint32_t x = rng_state;
-//     x ^= x << 13;
-//     x ^= x >> 17;
-//     x ^= x << 5;
-//     rng_state = x;
-//     uint32_t ts = (uint32_t)rdtsc64();
-//     return x ^ ts;
-// #endif
-// }
-// 
-// static uint32_t rand_bounded(uint32_t bound) {
-//     if (bound == 0) return 0;
-//     uint32_t threshold = -bound % bound;
-//     while (1) {
-//         uint32_t r = prng_u32();
-//         if (r >= threshold) return r % bound;
-//     }
-// }
-
-/* Process management */
 void lottery_add_process(struct pcb *p) {
     if (!p) return;
     p->next = NULL;
@@ -113,7 +72,6 @@ int sys_set_tickets(uint32_t tickets) {
     return lottery_set_tickets(me->pid, tickets);
 }
 
-/* Scheduling */
 static struct pcb *lottery_pick(void) {
     if (total_tickets == 0) return NULL;
     uint32_t winning = rng_get_range(total_tickets) + 1;
@@ -151,12 +109,10 @@ void lottery_schedule_yield(void) {
     context_switch(old_ctx, new_ctx);
 }
 
-/* Boot-time parsing if kernel provides cmdline */
 void lottery_parse_cmdline_tickets(void) {
     const char *cmd = kernel_cmdline_str();
     if (!cmd) return;
     const char *p = cmd;
-    /* find tickets= */
     const char *found = NULL;
     while (*p) {
         if (*p == 't') {
@@ -189,6 +145,5 @@ void lottery_init(void) {
     proc_table = NULL;
     last_added = NULL;
     total_tickets = 0;
-//     rng_state = (uint32_t)(rdtsc64() ^ 0xC0FFEE);
     lottery_parse_cmdline_tickets();
 }
